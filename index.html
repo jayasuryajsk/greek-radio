@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ελληνικό Ραδιόφωνο">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Ελληνικό Ραδιόφωνο · Greek Radio</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --card2: #1f2630; --line: #2a313c;
+    --text: #e6e9ef; --dim: #8b95a5; --acc: #4da3ff; --live: #ff4d5e;
+    --gold: #ffd166; --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: calc(96px + var(--safe-b));
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: rgba(13,17,23,.92);
+    backdrop-filter: blur(12px); padding: calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 { font-size: 20px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  h1 .gr { color: var(--acc); }
+  h1 small { font-size: 12px; color: var(--dim); font-weight: 400; margin-left: auto; }
+  #search {
+    width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-size: 16px; outline: none;
+  }
+  #chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px; scrollbar-width: none; }
+  #chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; padding: 7px 13px; border-radius: 999px; font-size: 13px;
+    background: var(--card); border: 1px solid var(--line); color: var(--dim);
+  }
+  .chip.on { background: var(--acc); border-color: var(--acc); color: #fff; font-weight: 600; }
+  main { padding: 6px 14px; }
+  .sec {
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--dim); margin: 18px 4px 8px;
+  }
+  .st {
+    display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    margin-bottom: 8px; cursor: pointer;
+  }
+  .st:active { background: var(--card2); }
+  .st.playing { border-color: var(--live); }
+  .st img {
+    width: 44px; height: 44px; border-radius: 10px; background: var(--card2);
+    object-fit: contain; flex: 0 0 44px;
+  }
+  .st .m { min-width: 0; flex: 1; }
+  .st .n { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st .g { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .badge {
+    flex: 0 0 auto; font-size: 10px; font-weight: 700; padding: 3px 7px;
+    border-radius: 6px; background: var(--card2); color: var(--gold); border: 1px solid var(--gold);
+  }
+  .live { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--live); animation: p 1.2s infinite; }
+  @keyframes p { 50% { opacity: .25; } }
+  .fav {
+    flex: 0 0 auto; font-size: 20px; color: var(--dim); padding: 8px 4px 8px 8px;
+    -webkit-user-select: none; user-select: none;
+  }
+  .fav.on { color: var(--gold); }
+  #player {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(22,27,34,.97); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 12px 16px calc(12px + var(--safe-b));
+    display: none; align-items: center; gap: 12px;
+  }
+  #player.show { display: flex; }
+  #pimg { width: 48px; height: 48px; border-radius: 10px; background: var(--card2); object-fit: contain; }
+  #pinfo { flex: 1; min-width: 0; }
+  #pname { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #pstat { font-size: 12px; color: var(--dim); margin-top: 3px; }
+  #pstat.live { color: var(--live); font-weight: 600; }
+  #ppause {
+    width: 52px; height: 52px; border-radius: 50%; border: none; background: var(--acc);
+    color: #fff; font-size: 20px; flex: 0 0 52px; cursor: pointer;
+  }
+  #pstop {
+    width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line);
+    background: var(--card); color: var(--dim); font-size: 16px; flex: 0 0 40px; cursor: pointer;
+  }
+  .empty { text-align: center; color: var(--dim); padding: 60px 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="gr">♪</span> Ελληνικό Ραδιόφωνo <small>Greek Radio</small></h1>
+  <input id="search" type="search" placeholder="Αναζήτηση · Search station…">
+  <div id="chips"></div>
+</header>
+<main id="list"></main>
+
+<div id="player">
+  <img id="pimg" alt="">
+  <div id="pinfo">
+    <div id="pname"></div>
+    <div id="pstat">Σύνδεση…</div>
+  </div>
+  <button id="ppause" aria-label="pause">❚❚</button>
+  <button id="pstop" aria-label="stop">✕</button>
+</div>
+
+<script>
+const state = { q: '', group: '', stations: [], fav: new Set(JSON.parse(localStorage.fav || '[]')),
+                rec: JSON.parse(localStorage.rec || '[]'), cur: -1, wantPlay: false };
+
+const audio = new Audio();
+audio.preload = 'none';
+
+const $ = id => document.getElementById(id);
+const listEl = $('list');
+
+function save() {
+  localStorage.fav = JSON.stringify([...state.fav]);
+  localStorage.rec = JSON.stringify(state.rec.slice(0, 12));
+}
+
+function play(i) {
+  const st = state.filtered[i]; if (!st) return;
+  state.cur = i; state.wantPlay = true;
+  audio.src = st.u; audio.play().catch(() => {});
+  state.rec = [st.u, ...state.rec.filter(u => u !== st.u)].slice(0, 12);
+  save(); render(); showPlayer(st);
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: st.n, artist: st.g || 'Greek Radio', album: 'Ελληνικό Ραδιόφωνο',
+      artwork: st.l ? [{ src: st.l, sizes: '256x256' }] : []
+    });
+  }
+}
+
+function showPlayer(st) {
+  $('player').classList.add('show');
+  $('pname').textContent = st.n;
+  $('pimg').src = st.l || 'icon-180.png';
+  setStat('Σύνδεση…', false);
+}
+
+function setStat(t, live) {
+  const e = $('pstat'); e.textContent = t;
+  e.className = live ? 'live' : '';
+}
+
+audio.addEventListener('playing', () => { setStat('ΕΚΠΟΜΠΗ · ON AIR', true); $('ppause').textContent = '❚❚'; });
+audio.addEventListener('waiting', () => setStat('Buffering…', false));
+audio.addEventListener('error', () => setStat('Δεν συνδέεται — δοκιμάστε ξανά / may need VPN', false));
+audio.addEventListener('pause', () => { setStat('Παύση · Paused', false); $('ppause').textContent = '▶'; });
+
+$('ppause').onclick = () => { if (audio.paused) audio.play().catch(()=>{}); else audio.pause(); };
+$('pstop').onclick = () => {
+  audio.pause(); audio.removeAttribute('src'); audio.load();
+  $('player').classList.remove('show'); state.cur = -1; render();
+};
+
+function rowHTML(st, i, opts = {}) {
+  const fav = state.fav.has(st.u);
+  return `<div class="st ${state.cur === i ? 'playing' : ''}" data-i="${i}">
+    ${st.l ? `<img src="${st.l}" loading="lazy" onerror="this.style.visibility='hidden'">`
+           : `<img src="icon-180.png">`}
+    <div class="m"><div class="n">${st.n}</div><div class="g">${st.g || ''}</div></div>
+    ${st.v ? '<span class="badge">VPN</span>' : ''}
+    ${state.cur === i ? '<span class="live"></span>' : ''}
+    <span class="fav ${fav ? 'on' : ''}" data-fav="${i}">${fav ? '★' : '☆'}</span>
+  </div>`;
+}
+
+function computeFiltered() {
+  const q = state.q.trim().toLowerCase();
+  const base = state.stations;
+  let favs = [], recs = [], rest = [];
+  const recSet = new Set(state.rec);
+  base.forEach(st => {
+    if (state.group && st.g !== state.group) return;
+    if (q && !st.n.toLowerCase().includes(q) && !st.g.toLowerCase().includes(q)) return;
+    if (state.fav.has(st.u)) favs.push(st);
+    else if (recSet.has(st.u)) recs.push(st);
+    else rest.push(st);
+  });
+  recs.sort((a, b) => state.rec.indexOf(a.u) - state.rec.indexOf(b.u));
+  state.filtered = [...favs, ...recs, ...rest];
+  const idx = u => state.filtered.findIndex(s => s.u === u);
+  let html = '';
+  if (!q && !state.group) {
+    if (favs.length) html += `<div class="sec">★ Αγαπημένα · Favorites</div>` + favs.map((s) => rowHTML(s, idx(s.u))).join('');
+    if (recs.length) html += `<div class="sec">▸ Πρόσφατα · Recent</div>` + recs.map((s) => rowHTML(s, idx(s.u))).join('');
+    html += `<div class="sec">Όλοι οι σταθμοί · All stations</div>`;
+  }
+  html += rest.map(s => rowHTML(s, idx(s.u))).join('') ||
+          (favs.length || recs.length ? '' : '<div class="empty">Δεν βρέθηκαν σταθμοί<br>No stations found</div>');
+  listEl.innerHTML = html;
+}
+
+function render() { computeFiltered(); }
+
+listEl.addEventListener('click', e => {
+  const favEl = e.target.closest('[data-fav]');
+  if (favEl) {
+    const st = state.filtered[+favEl.dataset.fav];
+    if (st) { state.fav.has(st.u) ? state.fav.delete(st.u) : state.fav.add(st.u); save(); render(); }
+    e.stopPropagation(); return;
+  }
+  const row = e.target.closest('.st');
+  if (row) play(+row.dataset.i);
+});
+
+$('search').addEventListener('input', e => { state.q = e.target.value; render(); });
+
+function buildChips() {
+  const groups = [...new Set(state.stations.map(s => s.g).filter(Boolean))];
+  const counts = {};
+  state.stations.forEach(s => { if (s.g) counts[s.g] = (counts[s.g] || 0) + 1; });
+  const chipAll = `<span class="chip ${state.group ? '' : 'on'}" data-g="">Όλες (${state.stations.length})</span>`;
+  $('chips').innerHTML = chipAll + groups
+    .sort((a, b) => counts[b] - counts[a])
+    .map(g => `<span class="chip ${state.group === g ? 'on' : ''}" data-g="${g}">${g} (${counts[g]})</span>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(c =>
+    c.addEventListener('click', () => { state.group = c.dataset.g; buildChips(); render(); }));
+}
+
+fetch('stations.json').then(r => r.json()).then(data => {
+  state.stations = data; state.filtered = data;
+  buildChips(); render();
+});
+</script>
+</body>
+</html>
