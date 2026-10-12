@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Ελληνικό Ραδιόφωνο">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Ελληνικό Ραδιόφωνο · Greek Radio</title>
+<title>Ελληνικό Ραδιόφωνο & TV · Greek Radio & TV</title>
 <style>
   :root {
     --bg: #0d1117; --card: #161b22; --card2: #1f2630; --line: #2a313c;
@@ -22,13 +22,17 @@
     padding-bottom: calc(96px + var(--safe-b));
   }
   header {
-    position: sticky; top: 0; z-index: 10; background: rgba(13,17,23,.92);
-    backdrop-filter: blur(12px); padding: calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;
+    position: sticky; top: 0; z-index: 10; background: rgba(13,17,23,.94);
+    backdrop-filter: blur(12px);
+    padding: calc(env(safe-area-inset-top,0px) + 10px) 14px 8px;
     border-bottom: 1px solid var(--line);
   }
-  h1 { font-size: 20px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
-  h1 .gr { color: var(--acc); }
-  h1 small { font-size: 12px; color: var(--dim); font-weight: 400; margin-left: auto; }
+  #tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tab {
+    flex: 1; padding: 9px 0; text-align: center; font-size: 14px; font-weight: 600;
+    border-radius: 11px; background: var(--card); color: var(--dim); border: 1px solid var(--line);
+  }
+  .tab.on { background: var(--acc); color: #fff; border-color: var(--acc); }
   #search {
     width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line);
     background: var(--card); color: var(--text); font-size: 16px; outline: none;
@@ -56,9 +60,10 @@
     width: 44px; height: 44px; border-radius: 10px; background: var(--card2);
     object-fit: contain; flex: 0 0 44px;
   }
+  .st.tv img { width: 64px; height: 40px; object-fit: contain; }
   .st .m { min-width: 0; flex: 1; }
   .st .n { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .st .g { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .st .g { font-size: 12px; color: var(--dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .badge {
     flex: 0 0 auto; font-size: 10px; font-weight: 700; padding: 3px 7px;
     border-radius: 6px; background: var(--card2); color: var(--gold); border: 1px solid var(--gold);
@@ -93,12 +98,55 @@
     background: var(--card); color: var(--dim); font-size: 16px; flex: 0 0 40px; cursor: pointer;
   }
   .empty { text-align: center; color: var(--dim); padding: 60px 20px; font-size: 14px; }
+
+  /* TV fullscreen overlay */
+  #tv {
+    position: fixed; inset: 0; z-index: 40; background: #000; display: none;
+    flex-direction: column;
+  }
+  #tv.show { display: flex; }
+  #tvtop {
+    display: flex; align-items: center; gap: 10px;
+    padding: calc(env(safe-area-inset-top,0px) + 12px) 16px 10px;
+    background: #000; color: #fff;
+  }
+  #tvback { background: none; border: none; color: var(--acc); font-size: 30px; line-height: 1; padding: 0 8px 0 0; }
+  #tvname { font-size: 16px; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #tvsite { font-size: 12px; color: var(--acc); text-decoration: none; }
+  #tv video { width: 100%; flex: 1; background: #000; }
+  #tvmsg { color: var(--dim); text-align: center; padding: 20px; font-size: 14px; }
+
+  /* Episodes sheet */
+  #eps {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 78vh;
+    background: var(--card); border-radius: 18px 18px 0 0; border: 1px solid var(--line);
+    display: none; flex-direction: column;
+    padding-bottom: var(--safe-b);
+  }
+  #eps.show { display: flex; }
+  #epsh { display: flex; align-items: center; padding: 14px 16px 8px; }
+  #epstitle { flex: 1; font-size: 16px; font-weight: 700; }
+  #epsclose { background: var(--card2); color: var(--dim); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 14px; }
+  #epslist { overflow-y: auto; padding: 4px 12px 14px; }
+  .ep {
+    display: flex; align-items: center; gap: 10px; padding: 12px;
+    border-bottom: 1px solid var(--line); cursor: pointer;
+  }
+  .ep:last-child { border-bottom: none; }
+  .ep .en { font-size: 15px; }
+  .ep .eg { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .ep .go { margin-left: auto; color: var(--acc); font-size: 20px; }
+  .spin { text-align: center; color: var(--dim); padding: 30px; font-size: 14px; }
 </style>
 </head>
 <body>
 <header>
-  <h1><span class="gr">♪</span> Ελληνικό Ραδιόφωνo <small>Greek Radio</small></h1>
-  <input id="search" type="search" placeholder="Αναζήτηση · Search station…">
+  <div id="tabs">
+    <div class="tab on" data-t="radio">♪ Ραδιόφωνο</div>
+    <div class="tab" data-t="tv">▶ Τηλεόραση</div>
+    <div class="tab" data-t="shows">★ Εκπομπές</div>
+  </div>
+  <input id="search" type="search" placeholder="Αναζήτηση · Search…">
   <div id="chips"></div>
 </header>
 <main id="list"></main>
@@ -113,13 +161,36 @@
   <button id="pstop" aria-label="stop">✕</button>
 </div>
 
+<div id="tv">
+  <div id="tvtop">
+    <button id="tvback" aria-label="back">‹</button>
+    <div id="tvname"></div>
+    <a id="tvsite" href="#" target="_blank" rel="noopener">Ιστότοπος ↗</a>
+  </div>
+  <video id="tvvid" controls playsinline autoplay></video>
+  <div id="tvmsg" style="display:none"></div>
+</div>
+
+<div id="eps">
+  <div id="epsh">
+    <div id="epstitle"></div>
+    <button id="epsclose" aria-label="close">✕</button>
+  </div>
+  <div id="epslist"></div>
+</div>
+
 <script>
-const state = { q: '', group: '', stations: [], fav: new Set(JSON.parse(localStorage.fav || '[]')),
-                rec: JSON.parse(localStorage.rec || '[]'), cur: -1, wantPlay: false };
+const RAW = 'https://raw.githubusercontent.com/possiblelife/gtrvlst/main/';
+const state = {
+  tab: 'radio', q: '', group: '',
+  stations: [], shows: [], tv: [],
+  fav: new Set(JSON.parse(localStorage.fav || '[]')),
+  rec: JSON.parse(localStorage.rec || '[]'),
+  filtered: [], cur: -1,
+};
 
 const audio = new Audio();
 audio.preload = 'none';
-
 const $ = id => document.getElementById(id);
 const listEl = $('list');
 
@@ -128,9 +199,10 @@ function save() {
   localStorage.rec = JSON.stringify(state.rec.slice(0, 12));
 }
 
-function play(i) {
+/* ---------- radio ---------- */
+function playRadio(i) {
   const st = state.filtered[i]; if (!st) return;
-  state.cur = i; state.wantPlay = true;
+  state.cur = i;
   audio.src = st.u; audio.play().catch(() => {});
   state.rec = [st.u, ...state.rec.filter(u => u !== st.u)].slice(0, 12);
   save(); render(); showPlayer(st);
@@ -141,97 +213,184 @@ function play(i) {
     });
   }
 }
-
 function showPlayer(st) {
   $('player').classList.add('show');
   $('pname').textContent = st.n;
   $('pimg').src = st.l || 'icon-180.png';
   setStat('Σύνδεση…', false);
 }
-
 function setStat(t, live) {
-  const e = $('pstat'); e.textContent = t;
-  e.className = live ? 'live' : '';
+  const e = $('pstat'); e.textContent = t; e.className = live ? 'live' : '';
 }
-
 audio.addEventListener('playing', () => { setStat('ΕΚΠΟΜΠΗ · ON AIR', true); $('ppause').textContent = '❚❚'; });
 audio.addEventListener('waiting', () => setStat('Buffering…', false));
-audio.addEventListener('error', () => setStat('Δεν συνδέεται — δοκιμάστε ξανά / may need VPN', false));
+audio.addEventListener('error', () => setStat('Δεν συνδέεται — ίσως χρειάζεται VPN', false));
 audio.addEventListener('pause', () => { setStat('Παύση · Paused', false); $('ppause').textContent = '▶'; });
-
 $('ppause').onclick = () => { if (audio.paused) audio.play().catch(()=>{}); else audio.pause(); };
 $('pstop').onclick = () => {
   audio.pause(); audio.removeAttribute('src'); audio.load();
   $('player').classList.remove('show'); state.cur = -1; render();
 };
 
-function rowHTML(st, i, opts = {}) {
+/* ---------- live tv ---------- */
+function playTV(i) {
+  const ch = state.filtered[i]; if (!ch) return;
+  audio.pause();
+  $('tv').classList.add('show');
+  $('tvname').textContent = ch.n;
+  $('tvsite').href = ch.w || '#';
+  const v = $('tvvid');
+  v.style.display = ''; $('tvmsg').style.display = 'none';
+  v.src = ch.u; v.play().catch(() => {});
+  v.onerror = () => {
+    v.style.display = 'none';
+    const m = $('tvmsg');
+    m.style.display = '';
+    m.textContent = ch.v
+      ? 'Το κανάλι δεν αναπαράγεται. Δοκιμάστε με VPN ενεργό. / Try again with VPN on.'
+      : 'Το κανάλι δεν είναι διαθέσιμο αυτή τη στιγμή. / Channel temporarily unavailable.';
+  };
+}
+$('tvback').onclick = () => {
+  const v = $('tvvid'); v.pause(); v.removeAttribute('src'); v.load();
+  $('tv').classList.remove('show');
+};
+
+/* ---------- shows (VOD) ---------- */
+function openShow(sh) {
+  $('eps').classList.add('show');
+  $('epstitle').textContent = sh.n + ' — ' + sh.c;
+  $('epslist').innerHTML = '<div class="spin">Φόρτωση επεισοδίων…</div>';
+  fetch(RAW + sh.p).then(r => r.text()).then(txt => {
+    const eps = [];
+    let meta = {};
+    for (const raw of txt.split('\n')) {
+      const line = raw.replace(/\r/g, '').trim();
+      if (line.startsWith('#EXTINF')) {
+        const g = line.match(/group-title="([^"]*)"/);
+        meta = { g: g ? g[1] : '', n: line.includes(',') ? line.split(',').pop().trim() : '' };
+      } else if (line.startsWith('http')) {
+        eps.push({ n: meta.n, g: meta.g, u: line.split('|')[0].trim() });
+      }
+    }
+    if (!eps.length) {
+      $('epslist').innerHTML = '<div class="spin">Δεν βρέθηκαν επεισόδια</div>';
+      return;
+    }
+    $('epslist').innerHTML = eps.map((e, i) =>
+      `<div class="ep" data-e="${i}">
+         <div><div class="en">${esc(e.n || 'Επεισόδιο')}</div><div class="eg">${esc(e.g)}</div></div>
+         <span class="go">▶</span>
+       </div>`).join('');
+    $('epslist').querySelectorAll('.ep').forEach(el =>
+      el.addEventListener('click', () => window.open(eps[+el.dataset.e].u, '_blank')));
+  }).catch(() => {
+    $('epslist').innerHTML = '<div class="spin">Σφάλμα φόρτωσης — δοκιμάστε ξανά</div>';
+  });
+}
+$('epsclose').onclick = () => $('eps').classList.remove('show');
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ---------- rendering ---------- */
+function rowHTML(st, i, tv) {
   const fav = state.fav.has(st.u);
-  return `<div class="st ${state.cur === i ? 'playing' : ''}" data-i="${i}">
+  return `<div class="st ${tv ? 'tv' : ''} ${state.cur === i && !tv ? 'playing' : ''}" data-i="${i}">
     ${st.l ? `<img src="${st.l}" loading="lazy" onerror="this.style.visibility='hidden'">`
            : `<img src="icon-180.png">`}
-    <div class="m"><div class="n">${st.n}</div><div class="g">${st.g || ''}</div></div>
+    <div class="m"><div class="n">${esc(st.n)}</div><div class="g">${esc(st.g || '')}</div></div>
     ${st.v ? '<span class="badge">VPN</span>' : ''}
-    ${state.cur === i ? '<span class="live"></span>' : ''}
+    ${state.cur === i && !tv ? '<span class="live"></span>' : ''}
     <span class="fav ${fav ? 'on' : ''}" data-fav="${i}">${fav ? '★' : '☆'}</span>
   </div>`;
 }
+function showRowHTML(sh, i) {
+  return `<div class="st" data-show="${i}">
+    <img src="icon-180.png">
+    <div class="m"><div class="n">${esc(sh.n)}</div><div class="g">${esc(sh.c)} · ${esc(sh.s)}</div></div>
+    <span class="fav" style="color:var(--acc)">▶</span>
+  </div>`;
+}
 
-function computeFiltered() {
+function render() {
   const q = state.q.trim().toLowerCase();
-  const base = state.stations;
+  let items, tv = state.tab === 'tv', shows = state.tab === 'shows';
+  if (tv) items = state.tv; else if (shows) items = state.shows; else items = state.stations;
+
   let favs = [], recs = [], rest = [];
   const recSet = new Set(state.rec);
-  base.forEach(st => {
-    if (state.group && st.g !== state.group) return;
-    if (q && !st.n.toLowerCase().includes(q) && !st.g.toLowerCase().includes(q)) return;
-    if (state.fav.has(st.u)) favs.push(st);
-    else if (recSet.has(st.u)) recs.push(st);
+  items.forEach(st => {
+    const hay = (st.n + ' ' + (st.g || '') + ' ' + (st.c || '') + ' ' + (st.s || '')).toLowerCase();
+    if (state.group && (st.g || st.c) !== state.group) return;
+    if (q && !hay.includes(q)) return;
+    if (!shows && !tv && state.fav.has(st.u)) favs.push(st);
+    else if (!shows && !tv && recSet.has(st.u)) recs.push(st);
     else rest.push(st);
   });
   recs.sort((a, b) => state.rec.indexOf(a.u) - state.rec.indexOf(b.u));
-  state.filtered = [...favs, ...recs, ...rest];
+  state.filtered = shows ? rest : [...favs, ...recs, ...rest];
   const idx = u => state.filtered.findIndex(s => s.u === u);
+
   let html = '';
-  if (!q && !state.group) {
-    if (favs.length) html += `<div class="sec">★ Αγαπημένα · Favorites</div>` + favs.map((s) => rowHTML(s, idx(s.u))).join('');
-    if (recs.length) html += `<div class="sec">▸ Πρόσφατα · Recent</div>` + recs.map((s) => rowHTML(s, idx(s.u))).join('');
+  if (!shows && !tv && !q && !state.group) {
+    if (favs.length) html += `<div class="sec">★ Αγαπημένα · Favorites</div>` + favs.map(s => rowHTML(s, idx(s.u))).join('');
+    if (recs.length) html += `<div class="sec">▸ Πρόσφατα · Recent</div>` + recs.map(s => rowHTML(s, idx(s.u))).join('');
     html += `<div class="sec">Όλοι οι σταθμοί · All stations</div>`;
   }
-  html += rest.map(s => rowHTML(s, idx(s.u))).join('') ||
-          (favs.length || recs.length ? '' : '<div class="empty">Δεν βρέθηκαν σταθμοί<br>No stations found</div>');
+  if (shows) html += rest.map(s => showRowHTML(s, state.filtered.indexOf(s))).join('');
+  else html += rest.map(s => rowHTML(s, idx(s.u))).join('');
+  if (!state.filtered.length && !favs.length && !recs.length)
+    html = '<div class="empty">Δεν βρέθηκαν αποτελέσματα<br>Nothing found</div>';
   listEl.innerHTML = html;
 }
 
-function render() { computeFiltered(); }
-
 listEl.addEventListener('click', e => {
   const favEl = e.target.closest('[data-fav]');
-  if (favEl) {
+  if (favEl && state.tab === 'radio') {
     const st = state.filtered[+favEl.dataset.fav];
     if (st) { state.fav.has(st.u) ? state.fav.delete(st.u) : state.fav.add(st.u); save(); render(); }
     e.stopPropagation(); return;
   }
+  const showEl = e.target.closest('[data-show]');
+  if (showEl) { openShow(state.filtered[+showEl.dataset.show]); return; }
   const row = e.target.closest('.st');
-  if (row) play(+row.dataset.i);
+  if (!row) return;
+  if (state.tab === 'radio') playRadio(+row.dataset.i);
+  else if (state.tab === 'tv') playTV(+row.dataset.i);
 });
 
+/* ---------- tabs & chips ---------- */
+document.querySelectorAll('.tab').forEach(t =>
+  t.addEventListener('click', () => {
+    state.tab = t.dataset.t; state.group = ''; state.q = ''; $('search').value = '';
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+    buildChips(); render();
+  }));
 $('search').addEventListener('input', e => { state.q = e.target.value; render(); });
 
 function buildChips() {
-  const groups = [...new Set(state.stations.map(s => s.g).filter(Boolean))];
+  let groups, items;
+  if (state.tab === 'tv') items = state.tv;
+  else if (state.tab === 'shows') items = state.shows;
+  else items = state.stations;
+  const key = st => st.g || st.c || '';
   const counts = {};
-  state.stations.forEach(s => { if (s.g) counts[s.g] = (counts[s.g] || 0) + 1; });
-  const chipAll = `<span class="chip ${state.group ? '' : 'on'}" data-g="">Όλες (${state.stations.length})</span>`;
-  $('chips').innerHTML = chipAll + groups
-    .sort((a, b) => counts[b] - counts[a])
-    .map(g => `<span class="chip ${state.group === g ? 'on' : ''}" data-g="${g}">${g} (${counts[g]})</span>`).join('');
+  items.forEach(st => { const k = key(st); if (k) counts[k] = (counts[k] || 0) + 1; });
+  groups = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  const label = state.tab === 'shows' ? 'Όλα' : 'Όλες';
+  $('chips').innerHTML =
+    `<span class="chip ${state.group ? '' : 'on'}" data-g="">${label} (${items.length})</span>` +
+    groups.map(g => `<span class="chip ${state.group === g ? 'on' : ''}" data-g="${esc(g)}">${esc(g)} (${counts[g]})</span>`).join('');
   $('chips').querySelectorAll('.chip').forEach(c =>
     c.addEventListener('click', () => { state.group = c.dataset.g; buildChips(); render(); }));
 }
 
-fetch('stations.json').then(r => r.json()).then(data => {
-  state.stations = data; state.filtered = data;
+/* ---------- boot ---------- */
+Promise.all([
+  fetch('stations.json').then(r => r.json()),
+  fetch('tv_live.json').then(r => r.json()),
+  fetch('shows.json').then(r => r.json()),
+]).then(([stations, tv, shows]) => {
+  state.stations = stations; state.tv = tv; state.shows = shows;
   buildChips(); render();
 });
 </script>
